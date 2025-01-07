@@ -58,6 +58,9 @@ export const Pocket = ({ sizeIcon, colorIcon }) => (
 export const Shopify = ({ sizeIcon, colorIcon }) => (
   <FontAwesome5 name="shopify" size={sizeIcon} color={colorIcon} />
 );
+export const Trash = ({ sizeIcon, colorIcon }) => (
+  <FontAwesome5 name="trash" size={sizeIcon} color={colorIcon} />
+);
 
 export const Shoppingcartcheckout = ({ sizeIcon, colorIcon }) => (
   <MaterialIcons

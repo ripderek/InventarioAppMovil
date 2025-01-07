@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,15 +10,29 @@ import {
 } from "react-native";
 import { Stack, useNavigation } from "expo-router";
 import Screen from "../../components/Screen";
-import { Insert_Proveedor } from "../DataBase";
+import {
+  Update_Proveedor,
+  Select_ID_Proveedor,
+  Delete_Proveedor,
+} from "../DataBase";
+import { Loader } from "../Layouts/Loader";
+import { Trash } from "../Icons";
 
-export function CrearProveedor() {
+export function VerProveedor({ idProveedor }) {
+  const [Load, SetLoad] = useState(false);
+
   //estado para almacenar toda la informacion
-  const [InfoRegistrar, SetInfoRegistrar] = useState({
-    proveedor: "",
-    descripcion: "",
-  });
-  //contexto para obtener la bd
+  const [InfoRegistrar, SetInfoRegistrar] = useState(); //con un useEffect obtener los datos de ese proveedor segun el id skere modo diablo
+  useEffect(() => {
+    ObtenerInfoProveedor();
+  }, [idProveedor]);
+
+  const ObtenerInfoProveedor = async () => {
+    SetLoad(true);
+    const info = await Select_ID_Proveedor(idProveedor);
+    SetInfoRegistrar(info);
+    SetLoad(false);
+  };
   //constante para guardar los nuevos datos
   const HandleChange = (name, value) => {
     //console.log(name, value);
@@ -30,21 +44,43 @@ export function CrearProveedor() {
     //primero hay que verificar si la informacion esta correcta por ejemplo si no van vacios los inputs y el tamano de la cedula y celular
     if (VerficarInformacion()) {
       try {
-        const mensaje = await Insert_Proveedor(
-          InfoRegistrar.proveedor,
-          InfoRegistrar.descripcion
-        );
+        const mensaje = await Update_Proveedor(InfoRegistrar);
         Alert.alert("Correcto", mensaje);
       } catch (error) {
         Alert.alert("Error", error.message);
       }
     }
   };
-
+  //funcion para eliminar la wea fobe skere modo dibalo
+  const Preguntar_Eliminar = () => {
+    Alert.alert(
+      "Confirmación",
+      "¿Deseas eliminar el proveedor?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Sí",
+          onPress: () => Eliminar(),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  //eliminar
+  const navigation = useNavigation(); // Hook para acceder a la navegación
+  const Eliminar = async () => {
+    SetLoad(true);
+    await Delete_Proveedor(InfoRegistrar);
+    SetLoad(false);
+    navigation.navigate("lista-proveedores");
+  };
   //funcion para verificar que no vayan vacias las propiedades del estado que contiene la informacion
   const VerficarInformacion = () => {
     const isEmpty = (str) => !str.trim();
-    if (isEmpty(InfoRegistrar.proveedor)) {
+    if (isEmpty(InfoRegistrar.Proveedor)) {
       alert("El campo proveedor no puede estar vacío");
       return false;
     }
@@ -66,19 +102,25 @@ export function CrearProveedor() {
           headerTintColor: "white",
           headerLeft: () => {},
           headerRight: () => {},
-          headerTitle: "Crear Proveedor",
+          headerTitle: "Editar Proveedor",
           headerTitleAlign: "center",
         }}
       />
-
+      {/* VER EL LOAD */}
+      {Load && <Loader />}
       <ScrollView>
         {/* Form */}
         <View className="flex mx-4 space-y-4">
           <View className="flex-row ">
-            <View>{/* <UserIcon colorIcon={"gray"} sizeIcon={20} />*/}</View>
-            <Text className=" text-base  text-gray-500  text-left ml-1">
+            <Text className="flex-1 text-base  text-gray-500  text-left ml-1">
               Datos generales
             </Text>
+            <TouchableOpacity
+              className="p-2 bg-red-700 rounded-lg"
+              onPress={Preguntar_Eliminar}
+            >
+              <Trash colorIcon="white" sizeIcon={20} />
+            </TouchableOpacity>
           </View>
 
           <View className="bg-slate-50  border border-1 border-gray-300 p-2  rounded-2xl w-full">
@@ -87,8 +129,8 @@ export function CrearProveedor() {
               placeholderTextColor={"black"}
               // className="uppercase"
               inputMode="url"
-              value={InfoRegistrar.proveedor}
-              onChangeText={(value) => HandleChange("proveedor", value)}
+              value={InfoRegistrar ? InfoRegistrar.Proveedor : ""}
+              onChangeText={(value) => HandleChange("Proveedor", value)}
             />
           </View>
           <View className="bg-slate-50  border border-1 border-gray-300 p-2  rounded-2xl w-full">
@@ -97,8 +139,8 @@ export function CrearProveedor() {
               placeholderTextColor={"black"}
               // className="uppercase"
               inputMode="url"
-              value={InfoRegistrar.descripcion}
-              onChangeText={(value) => HandleChange("descripcion", value)}
+              value={InfoRegistrar ? InfoRegistrar.Descripcion : ""}
+              onChangeText={(value) => HandleChange("Descripcion", value)}
             />
           </View>
           <View className="w-full">

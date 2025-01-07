@@ -20,7 +20,6 @@ import {
   CheclMarkIcon,
 } from "../../components/Icons";
 import { Loader } from "../../components/Layouts/Loader";
-import axios from "axios";
 import { Link } from "expo-router";
 
 const transparent = "rgba(0,0,0,0.5)";
