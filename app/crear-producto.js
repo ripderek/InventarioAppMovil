@@ -1,6 +1,6 @@
 import React from "react";
 import { CrearProducto } from "../components/Formularios/CrearProducto";
 
-export default function register_account() {
+export default function Crear_producto() {
   return <CrearProducto />;
 }

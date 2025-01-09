@@ -84,16 +84,7 @@ export function Proveedores() {
         </View>
       </View>
       {/* LISTA EN FORMA DE CUADRICULA DE 2 COLUMNAS */}
-      {/* <View>
-        
-        {Lista.map(({ Proveedor, Id, Descripcion }, index) => (
-          <View key={Id}>
-            <Text className="text-base font-bold text-green-900 text-center ">
-              {Proveedor}
-            </Text>
-          </View>
-        ))}
-      </View> */}
+
       {Lista && Lista.length > 0 ? (
         <FlatList
           data={Lista}

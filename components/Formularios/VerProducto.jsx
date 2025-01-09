@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,34 +8,31 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useNavigation } from "expo-router";
 import Screen from "../../components/Screen";
-import { Insert_Producto } from "../DataBase";
+import {
+  Update_Producto,
+  Select_ID_Producto,
+  Delete_Producto,
+} from "../DataBase";
 import { Loader } from "../Layouts/Loader";
-import { SeleccionarProveedor } from "../Listas/SeleccionarProveedor";
-export function CrearProducto() {
-  const [OpenLoader, setOpenLoader] = useState(false);
-  const [openProveedor, SetOpenProveedor] = useState(false);
+import { Trash } from "../Icons";
+
+export function VerProducto({ idProducto }) {
+  const [Load, SetLoad] = useState(false);
 
   //estado para almacenar toda la informacion
-  const [InfoRegistrar, SetInfoRegistrar] = useState({
-    Producto: "",
-    Descripcion: "",
-    PrecioCompra: 0,
-    PrecioVenta: 0,
-    Stock: 0,
-  });
-  const [Proveedor, SetProveedor] = useState({
-    Id: 0,
-    Proveedor: "",
-  });
-  const actualizarProveedor = (id, proveedor) => {
-    SetProveedor({
-      Id: id,
-      Proveedor: proveedor,
-    });
+  const [InfoRegistrar, SetInfoRegistrar] = useState(); //con un useEffect obtener los datos de ese proveedor segun el id skere modo diablo
+  useEffect(() => {
+    ObtenerInfoProveedor();
+  }, [idProducto]);
+
+  const ObtenerInfoProveedor = async () => {
+    SetLoad(true);
+    const info = await Select_ID_Producto(idProducto);
+    SetInfoRegistrar(info);
+    SetLoad(false);
   };
-  //contexto para obtener la bd
   //constante para guardar los nuevos datos
   const HandleChange = (name, value) => {
     //console.log(name, value);
@@ -45,33 +42,48 @@ export function CrearProducto() {
   //funcion para enviar los datos a la API
   const EnviarDatosRegistrar = async () => {
     //primero hay que verificar si la informacion esta correcta por ejemplo si no van vacios los inputs y el tamano de la cedula y celular
-    //setOpenLoader(true);
     if (VerficarInformacion()) {
       try {
-        const mensaje = await Insert_Producto(InfoRegistrar, Proveedor.Id);
-        //setOpenLoader(false);
+        const mensaje = await Update_Producto(InfoRegistrar);
         Alert.alert("Correcto", mensaje);
       } catch (error) {
-        //setOpenLoader(false);
         Alert.alert("Error", error.message);
       }
     }
   };
-
+  //funcion para eliminar la wea fobe skere modo dibalo
+  const Preguntar_Eliminar = () => {
+    Alert.alert(
+      "Confirmación",
+      "¿Deseas eliminar el producto?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Sí",
+          onPress: () => Eliminar(),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  //eliminarf
+  const navigation = useNavigation(); // Hook para acceder a la navegación
+  const Eliminar = async () => {
+    SetLoad(true);
+    await Delete_Producto(InfoRegistrar);
+    SetLoad(false);
+    navigation.navigate("lista-producto");
+  };
   //funcion para verificar que no vayan vacias las propiedades del estado que contiene la informacion
   const VerficarInformacion = () => {
     const isEmpty = (str) => !str.trim();
     if (isEmpty(InfoRegistrar.Producto)) {
-      alert("El campo producto no puede estar vacío");
+      alert("El campo Producto no puede estar vacío");
       return false;
     }
-    //Descripcion si puede estar vacio
-    /* 
-    if (isEmpty(InfoRegistrar.descripcion)) {
-      alert("El campo apellidos no puede estar vacío");
-      return false;
-    }
-  */
     return true;
   };
 
@@ -83,37 +95,33 @@ export function CrearProducto() {
           headerTintColor: "white",
           headerLeft: () => {},
           headerRight: () => {},
-          headerTitle: "Crear Producto",
+          headerTitle: "Editar Producto",
           headerTitleAlign: "center",
         }}
       />
-
-      {/* PARA ABRIR EL LOADER*/}
-      {OpenLoader ? <Loader /> : ""}
-      {/* ABRIR EL MODAL DE SELECCIONAR PROVEEDOR */}
-      {openProveedor && (
-        <SeleccionarProveedor
-          cerrar={() => SetOpenProveedor(false)}
-          actualizarProveedor={actualizarProveedor}
-        />
-      )}
+      {/* VER EL LOAD */}
+      {Load && <Loader />}
       <ScrollView>
         {/* Form */}
         <View className="flex mx-4 space-y-4">
           <View className="flex-row ">
-            <View>{/* <UserIcon colorIcon={"gray"} sizeIcon={20} />*/}</View>
-            <Text className=" text-base  text-gray-500  text-left ml-1">
+            <Text className="flex-1 text-base  text-gray-500  text-left ml-1">
               Datos generales
             </Text>
+            <TouchableOpacity
+              className="p-2 bg-red-700 rounded-lg"
+              onPress={Preguntar_Eliminar}
+            >
+              <Trash colorIcon="white" sizeIcon={20} />
+            </TouchableOpacity>
           </View>
-
           <View className="bg-slate-50  border border-1 border-gray-300 p-2  rounded-2xl w-full">
             <TextInput
               placeholder="Producto"
               placeholderTextColor={"black"}
               //className="uppercase"
               inputMode="url"
-              value={InfoRegistrar.Producto}
+              value={InfoRegistrar ? InfoRegistrar.Producto : ""}
               onChangeText={(value) => HandleChange("Producto", value)}
             />
           </View>
@@ -122,36 +130,13 @@ export function CrearProducto() {
               placeholder="Descripcion"
               placeholderTextColor={"black"}
               //className="uppercase"
-              value={InfoRegistrar.Descripcion}
+              //value={InfoRegistrar.Descripcion}
+              value={InfoRegistrar ? InfoRegistrar.Descripcion : ""}
               inputMode="url"
               onChangeText={(value) => HandleChange("Descripcion", value)}
             />
           </View>
-          {/* VER EL PROVEEDOR Y EL ID SELECCIONADO */}
-          {Proveedor.Proveedor && (
-            <View className="bg-slate-50  border border-1 border-gray-300 p-2 rounded-2xl w-full">
-              <TextInput
-                placeholder="Proveedor"
-                placeholderTextColor={"black"}
-                //className="uppercase"
-                value={`${Proveedor.Id} - ${Proveedor.Proveedor}`}
-                inputMode="url"
-                editable={false}
-              />
-            </View>
-          )}
 
-          {/* BOTON PARA SELECCIONAR EL PROVEEDOR */}
-          <View className="w-full">
-            <TouchableOpacity
-              className="w-full bg-slate-100 p-3 rounded-2xl mb-3 border-2"
-              onPress={() => SetOpenProveedor(true)}
-            >
-              <Text className=" text-sm font-bold text-black text-center">
-                Seleccionar Proveedor
-              </Text>
-            </TouchableOpacity>
-          </View>
           <View className="flex-row ">
             <View>{/*<Phone colorIcon={"gray"} sizeIcon={20} /> */}</View>
             <Text className=" text-base  text-gray-500  text-left ml-1">
@@ -165,7 +150,8 @@ export function CrearProducto() {
               //className="uppercase"
               inputMode="numeric"
               maxLength={10}
-              value={InfoRegistrar.PrecioCompra}
+              //value={InfoRegistrar.PrecioCompra}
+              value={InfoRegistrar ? InfoRegistrar.PrecioCompra.toString() : ""}
               onChangeText={(value) => HandleChange("PrecioCompra", value)}
             />
           </View>
@@ -176,7 +162,8 @@ export function CrearProducto() {
               //className="uppercase"
               inputMode="numeric"
               maxLength={10}
-              value={InfoRegistrar.PrecioVenta}
+              //value={InfoRegistrar.PrecioVenta}
+              value={InfoRegistrar ? InfoRegistrar.PrecioVenta.toString() : ""}
               onChangeText={(value) => HandleChange("PrecioVenta", value)}
             />
           </View>
@@ -187,7 +174,8 @@ export function CrearProducto() {
               //className="uppercase"
               inputMode="numeric"
               maxLength={10}
-              value={InfoRegistrar.Stock}
+              //value={InfoRegistrar.Stock}
+              value={InfoRegistrar ? InfoRegistrar.Stock.toString() : ""}
               onChangeText={(value) => HandleChange("Stock", value)}
             />
           </View>
