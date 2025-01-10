@@ -17,9 +17,11 @@ import {
 } from "../DataBase";
 import { Loader } from "../Layouts/Loader";
 import { Trash } from "../Icons";
+import { SeleccionarProveedor } from "../Listas/SeleccionarProveedor";
 
 export function VerProducto({ idProducto }) {
   const [Load, SetLoad] = useState(false);
+  const [openProveedor, SetOpenProveedor] = useState(false);
 
   //estado para almacenar toda la informacion
   const [InfoRegistrar, SetInfoRegistrar] = useState(); //con un useEffect obtener los datos de ese proveedor segun el id skere modo diablo
@@ -38,6 +40,7 @@ export function VerProducto({ idProducto }) {
     //console.log(name, value);
     SetInfoRegistrar({ ...InfoRegistrar, [name]: value });
     // setUser({ ...user, tipo_identificacion: tipoidentificacion });
+    //console.log(InfoRegistrar);
   };
   //funcion para enviar los datos a la API
   const EnviarDatosRegistrar = async () => {
@@ -72,6 +75,7 @@ export function VerProducto({ idProducto }) {
   //eliminarf
   const navigation = useNavigation(); // Hook para acceder a la navegación
   const Eliminar = async () => {
+    // console.log(InfoRegistrar);
     SetLoad(true);
     await Delete_Producto(InfoRegistrar);
     SetLoad(false);
@@ -86,7 +90,20 @@ export function VerProducto({ idProducto }) {
     }
     return true;
   };
-
+  const actualizarProveedor = (id, proveedor) => {
+    //console.log(id);
+    SetInfoRegistrar({
+      ...InfoRegistrar,
+      ProveedorId: id,
+      Proveedor: proveedor,
+    });
+    //console.log(InfoRegistrar);
+    // HandleChange("ProveedorId", id);
+    //HandleChange("Proveedor", proveedor);
+    //console.log(InfoRegistrar);
+    //alert("Actualizar Proveedor skere ");
+    SetOpenProveedor(false);
+  };
   return (
     <Screen>
       <Stack.Screen
@@ -101,6 +118,13 @@ export function VerProducto({ idProducto }) {
       />
       {/* VER EL LOAD */}
       {Load && <Loader />}
+      {/* ABRIR EL MODAL DE SELECCIONAR PROVEEDOR */}
+      {openProveedor && (
+        <SeleccionarProveedor
+          cerrar={() => SetOpenProveedor(false)}
+          actualizarProveedor={actualizarProveedor}
+        />
+      )}
       <ScrollView>
         {/* Form */}
         <View className="flex mx-4 space-y-4">
@@ -136,7 +160,32 @@ export function VerProducto({ idProducto }) {
               onChangeText={(value) => HandleChange("Descripcion", value)}
             />
           </View>
+          {/* VER EL PROVEEDOR Y EL ID SELECCIONADO */}
 
+          <View className="bg-slate-50  border border-1 border-gray-300 p-2 rounded-2xl w-full">
+            <TextInput
+              placeholder="Proveedor"
+              placeholderTextColor={"black"}
+              //className="uppercase"Proveedor
+              value={`${InfoRegistrar ? InfoRegistrar.ProveedorId : ""} - ${
+                InfoRegistrar ? InfoRegistrar.Proveedor : ""
+              }`}
+              inputMode="url"
+              editable={false}
+            />
+          </View>
+
+          {/* BOTON PARA SELECCIONAR EL PROVEEDOR */}
+          <View className="w-full">
+            <TouchableOpacity
+              className="w-full bg-slate-100 p-3 rounded-2xl mb-3 border-2"
+              onPress={() => SetOpenProveedor(true)}
+            >
+              <Text className=" text-sm font-bold text-black text-center">
+                Seleccionar Proveedor
+              </Text>
+            </TouchableOpacity>
+          </View>
           <View className="flex-row ">
             <View>{/*<Phone colorIcon={"gray"} sizeIcon={20} /> */}</View>
             <Text className=" text-base  text-gray-500  text-left ml-1">

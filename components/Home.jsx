@@ -58,7 +58,7 @@ export function Home() {
       <View className="mt-2">
         <View className="flex flex-wrap flex-row gap-2  text-center justify-center">
           {/*BOTON PRODUCTOS */}
-          <Link asChild href={"Auth/register-account"}>
+          <Link asChild href={"RealizarCompra"}>
             <TouchableOpacity
               className="w-2/5 bg-slate-50 rounded-xl flex p-2"
               //onPress={() => IniciarSesion()}

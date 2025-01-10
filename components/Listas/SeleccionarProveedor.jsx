@@ -30,8 +30,8 @@ export function SeleccionarProveedor({ cerrar, actualizarProveedor }) {
   };
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      className="flex-1 bg-slate-800 m-1  p-2 rounded-xl items-center"
-      onPress={() => (actualizarProveedor(item.Id, item.Proveedor), cerrar())}
+      className="flex-1 bg-slate-800 m-1  p-3 rounded-xl items-center"
+      onPress={() => actualizarProveedor(parseInt(item.Id), item.Proveedor)}
     >
       <Text className="text-sm font-bold text-slate-50">{item.Proveedor}</Text>
     </TouchableOpacity>

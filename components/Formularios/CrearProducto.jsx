@@ -34,6 +34,7 @@ export function CrearProducto() {
       Id: id,
       Proveedor: proveedor,
     });
+    SetOpenProveedor(false);
   };
   //contexto para obtener la bd
   //constante para guardar los nuevos datos

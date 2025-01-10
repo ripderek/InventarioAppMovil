@@ -73,9 +73,14 @@ export function VerProveedor({ idProveedor }) {
   const navigation = useNavigation(); // Hook para acceder a la navegación
   const Eliminar = async () => {
     SetLoad(true);
-    await Delete_Proveedor(InfoRegistrar);
-    SetLoad(false);
-    navigation.navigate("lista-proveedores");
+    try {
+      await Delete_Proveedor(InfoRegistrar);
+      SetLoad(false);
+      navigation.navigate("lista-proveedores");
+    } catch (error) {
+      SetLoad(false);
+      alert(error.message);
+    }
   };
   //funcion para verificar que no vayan vacias las propiedades del estado que contiene la informacion
   const VerficarInformacion = () => {

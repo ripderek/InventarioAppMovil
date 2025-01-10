@@ -33,6 +33,31 @@ export const creacionTablaProductos = async (db) => {
     console.log("Error while initializing the database: ", error);
   }
 };
+//Creacion de tabla Compras
+/*
+    ID_Compra   --> Se hace un count del total de registros agrupados por el ID_Compra + 1
+    Fecha_Compra
+    ProductoID 
+    Precio_Compra_Producto --> Se almacena el precio de compra del producto por si acaso modifica el producto
+*/
+export const creacionTablaCompras = async (db) => {
+  try {
+    // Creación de la tabla de Productos
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS Compras (
+        Compra_Id INTEGER NOT NULL,
+        Producto_ID INTEGER NOT NULL,
+        PrecioCompra DECIMAL(10, 2) NOT NULL,
+        Fecha_Compra TEXT NOT NULL,
+        FOREIGN KEY (Producto_ID) REFERENCES Productos (Id)
+      );
+    `);
+    console.log("Database iniciado Compras");
+  } catch (error) {
+    console.log("Error while initializing the database: ", error);
+  }
+};
+
 //conectar a la bd cuando se recarga la wea y para abrir y cerrar conexcion desde aqui mismo
 export const OpenConexionDB = async () => {
   const database = await SQLite.openDatabaseAsync("inventario.db", {
@@ -121,6 +146,17 @@ export const Update_Proveedor = async (proveedor) => {
 export const Delete_Proveedor = async (proveedor) => {
   try {
     const database = await OpenConexionDB();
+    //primero consultar si ese proveedor esta registrado con productos para no poderlo eliminar primero
+    const existingSupplier = await database.getFirstAsync(
+      "SELECT * FROM Productos WHERE ProveedorId = ?",
+      [proveedor.Id]
+    );
+    if (existingSupplier) {
+      database.closeAsync();
+      throw new Error(
+        "El proveedor no puede eliminarse porque esta registrado en productos"
+      );
+    }
     await database.runAsync("DELETE FROM Proveedores WHERE Id = ?", [
       proveedor.Id,
     ]);
@@ -188,17 +224,20 @@ export const Select_Producto = async () => {
 };
 //Ver producto por id
 export const Select_ID_Producto = async (idproducto) => {
+  //console.log(idproducto);
   try {
     if (idproducto) {
       //console.log("Entrando a Select_ID_Producto");
       //console.log(idproducto);
       const database = await OpenConexionDB();
       const existingSupplier = await database.getFirstAsync(
-        "SELECT * FROM Productos where Id  = ? ",
+        "SELECT p.Producto,p.Descripcion,p.Id,p.PrecioCompra,p.PrecioVenta,pp.Proveedor,p.ProveedorId,p.Stock  FROM Productos p inner join Proveedores pp on p.ProveedorId=pp.Id where p.Id  = ? ",
+        // "SELECT * FROM Productos where Id  = ? ",
         [idproducto]
       );
       database.closeAsync();
-      // console.log(existingSupplier);
+      console.log("Resultado del selec id producto");
+      console.log(existingSupplier);
       return await existingSupplier; //ver que devuelve para poderlo listar
     }
     return;
@@ -211,6 +250,7 @@ export const Select_ID_Producto = async (idproducto) => {
 export const Delete_Producto = async (producto) => {
   try {
     const database = await OpenConexionDB();
+
     await database.runAsync("DELETE FROM Productos WHERE Id = ?", [
       producto.Id,
     ]);
@@ -225,17 +265,20 @@ export const Delete_Producto = async (producto) => {
 //Editar producto
 export const Update_Producto = async (producto) => {
   try {
+    console.log("update producto");
+    console.log(producto);
     if (producto.PrecioCompra <= 0 || producto.PrecioVenta <= 0)
       throw new Error("El precio venta o compra no puede ser negativo o 0");
     const database = await OpenConexionDB();
     await database.runAsync(
-      "update Productos set Producto=?, Descripcion=? ,PrecioCompra=?,PrecioVenta=?,Stock=? where Id=?",
+      "update Productos set Producto=?, Descripcion=? ,PrecioCompra=?,PrecioVenta=?,Stock=?, ProveedorId=? where Id=?",
       [
         producto.Producto,
         producto.Descripcion,
         producto.PrecioCompra,
         producto.PrecioVenta,
         producto.Stock,
+        producto.ProveedorId,
         producto.Id,
       ]
     );
@@ -258,10 +301,28 @@ export const Select_Proveedor_Busqueda = async (palabraClave) => {
       [palabraBusqueda]
     );
     database.closeAsync();
-    console.log(existingSupplier);
+    // console.log(existingSupplier);
     return existingSupplier; //ver que devuelve para poderlo listar
   } catch (error) {
     console.log(`Error en Select_Proveedor_Busqueda: ${error.message}`);
+    throw error;
+  }
+};
+
+//busqueda de producto por palabra clave limit 6
+export const Select_Producto_Busqueda = async (palabraClave) => {
+  try {
+    const palabraBusqueda = `%${palabraClave}%`;
+    const database = await OpenConexionDB();
+    const existingSupplier = await database.getAllAsync(
+      "SELECT * FROM Productos p inner join Proveedores pp on p.ProveedorId=pp.Id WHERE p.Producto LIKE ? LIMIT 6;",
+      [palabraBusqueda]
+    );
+    database.closeAsync();
+    // console.log(existingSupplier);
+    return existingSupplier; //ver que devuelve para poderlo listar
+  } catch (error) {
+    console.log(`Error en Select_Producto_Busqueda: ${error.message}`);
     throw error;
   }
 };
